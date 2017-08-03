@@ -8,6 +8,7 @@
 #include <QColor>
 #include <QColorDialog>
 #include <QTimer>
+#include <QDir>
 
 class QAction;
 class QActionGroup;
@@ -32,7 +33,6 @@ private:
     void createActions();
     void createMenus();
     QMenu *fileMenu;
-    QAction *newAct;
     QAction *openAct;
     QAction *saveAct;
     qint8 selected_led_id;
@@ -46,18 +46,17 @@ protected:
 signals:
 
 private slots:
-    void add_pattern_handler(bool action);
+    void add_pattern_handler();
     void led_selected_handler(qint8 led_id);
-    void start_color_select_handler(bool action);
-    void end_color_select_handler(bool action);
-    void color_select_handler(bool action);
+    void start_color_select_handler();
+    void end_color_select_handler();
+    void color_select_handler();
     void color_dialog_handler(QColor color);
-    void play_button_handler(bool action);
-    void pause_button_handler(bool action);
-    void create_bin_handler(bool action);
-    void remove_pattern_handler(bool action);
+    void play_button_handler();
+    void pause_button_handler();
+    void create_bin_handler();
+    void remove_pattern_handler();
     void delete_led_handler();
-    void newFile();
     void open();
     void save();
 };

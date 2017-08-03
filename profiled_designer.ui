@@ -452,19 +452,6 @@
          <string>Delete LED</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="duplicate_led">
-        <property name="geometry">
-         <rect>
-          <x>0</x>
-          <y>480</y>
-          <width>111</width>
-          <height>32</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Duplicate LED</string>
-        </property>
-       </widget>
        <zorder>solid_color_text</zorder>
        <zorder>solid_color</zorder>
        <zorder>pattern</zorder>
@@ -487,7 +474,6 @@
        <zorder>remove_pattern</zorder>
        <zorder>add_pattern</zorder>
        <zorder>delete_led</zorder>
-       <zorder>duplicate_led</zorder>
       </widget>
      </widget>
     </item>

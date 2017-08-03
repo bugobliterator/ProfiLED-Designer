@@ -27,37 +27,37 @@ profiled_designer::profiled_designer(QWidget *parent) :
 
     //Connect Signals and slots
     QObject::connect(scene,SIGNAL(led_selected(qint8)), this, SLOT(led_selected_handler(qint8)));
-    QObject::connect(ui->color_select, SIGNAL(clicked(bool)), this, SLOT(color_select_handler(bool)));
-    QObject::connect(ui->start_color_select, SIGNAL(clicked(bool)), this, SLOT(start_color_select_handler(bool)));
-    QObject::connect(ui->end_color_select, SIGNAL(clicked(bool)), this, SLOT(end_color_select_handler(bool)));
-    QObject::connect(ui->add_pattern, SIGNAL(clicked(bool)), this, SLOT(add_pattern_handler(bool)));
-    QObject::connect(ui->play_button, SIGNAL(clicked(bool)), this, SLOT(play_button_handler(bool)));
-    QObject::connect(ui->pause_button, SIGNAL(clicked(bool)), this, SLOT(pause_button_handler(bool)));
-    QObject::connect(ui->create_bin, SIGNAL(clicked(bool)), this, SLOT(create_bin_handler(bool)));
-    QObject::connect(ui->remove_pattern, SIGNAL(clicked(bool)), this, SLOT(remove_pattern_handler(bool)));
+    QObject::connect(ui->color_select, SIGNAL(clicked(bool)), this, SLOT(color_select_handler()));
+    QObject::connect(ui->start_color_select, SIGNAL(clicked(bool)), this, SLOT(start_color_select_handler()));
+    QObject::connect(ui->end_color_select, SIGNAL(clicked(bool)), this, SLOT(end_color_select_handler()));
+    QObject::connect(ui->add_pattern, SIGNAL(clicked(bool)), this, SLOT(add_pattern_handler()));
+    QObject::connect(ui->play_button, SIGNAL(clicked(bool)), this, SLOT(play_button_handler()));
+    QObject::connect(ui->pause_button, SIGNAL(clicked(bool)), this, SLOT(pause_button_handler()));
+    QObject::connect(ui->create_bin, SIGNAL(clicked(bool)), this, SLOT(create_bin_handler()));
+    QObject::connect(ui->remove_pattern, SIGNAL(clicked(bool)), this, SLOT(remove_pattern_handler()));
     QObject::connect(timer, SIGNAL(timeout()), scene, SLOT(loop_player()));
     QObject::connect(ui->delete_led, SIGNAL(clicked(bool)), this, SLOT(delete_led_handler()));
 }
 
-void profiled_designer::play_button_handler(bool action)
+void profiled_designer::play_button_handler()
 {
     scene->set_loop_time(ui->loop_duration->value());
     timer->start(10);
 }
 
-void profiled_designer::pause_button_handler(bool action)
+void profiled_designer::pause_button_handler()
 {
     timer->stop();
 }
 
-void profiled_designer::create_bin_handler(bool action)
+void profiled_designer::create_bin_handler()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
         tr("LED Designer Binary Files"), tr(".ledbin"));
     scene->save_patterns_to_file(fileName);
 }
 
-void profiled_designer::remove_pattern_handler(bool action)
+void profiled_designer::remove_pattern_handler()
 {
     if(selected_led_id == -1) {
            return;
@@ -76,6 +76,10 @@ void profiled_designer::delete_led_handler()
         return;
     }
     scene->delete_led(selected_led_id);
+    selected_led_id -= 1;
+    if(selected_led_id == -1) {
+        ui->led_id->setText("");
+    }
 }
 
 void profiled_designer::led_selected_handler(qint8 led_id)
@@ -110,7 +114,7 @@ void profiled_designer::update_params(bool update_list)
     }
 }
 
-void profiled_designer::color_select_handler(bool action)
+void profiled_designer::color_select_handler()
 {
     if(selected_led_id == -1 || !ui->solid_color->isChecked()) {
         return;
@@ -135,7 +139,7 @@ void profiled_designer::color_dialog_handler(QColor color)
     curr_pattern.end_color = color;
 }
 
-void profiled_designer::start_color_select_handler(bool action)
+void profiled_designer::start_color_select_handler()
 {
     if(selected_led_id == -1 || !ui->pattern->isChecked()) {
         return;
@@ -152,7 +156,7 @@ void profiled_designer::start_color_select_handler(bool action)
     ui->start_color->setText(curr_pattern.start_color.name().toUpper());
 }
 
-void profiled_designer::end_color_select_handler(bool action)
+void profiled_designer::end_color_select_handler()
 {
     if(selected_led_id == -1 || !ui->pattern->isChecked()) {
         return;
@@ -168,12 +172,11 @@ void profiled_designer::end_color_select_handler(bool action)
     ui->end_color->setText(curr_pattern.end_color.name().toUpper());
 }
 
-void profiled_designer::add_pattern_handler(bool action)
+void profiled_designer::add_pattern_handler()
 {
     if(selected_led_id == -1) {
         return;
     }
-    qint16 global_total_time = ui->loop_duration->value();
 
     if(ui->pattern->isChecked()) {
         curr_pattern.is_solid = false;
@@ -197,28 +200,22 @@ void profiled_designer::contextMenuEvent(QContextMenuEvent *event)
 }
 #endif // QT_NO_CONTEXTMENU
 
-void profiled_designer::newFile()
-{
-
-}
-
 void profiled_designer::open()
 {
-
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("LED Designer Project Files"), QDir::homePath(), tr("LED Project (*.ledproj)"));
+    scene->load_ledproj(fileName);
 }
 
 void profiled_designer::save()
 {
-
+    QString fileName = QFileDialog::getSaveFileName(this,
+        tr("LED Designer Project Files"), tr(".ledproj"));
+    scene->save_ledproj(fileName);
 }
 
 void profiled_designer::createActions()
 {
-    newAct = new QAction(tr("&New"), this);
-    newAct->setShortcuts(QKeySequence::New);
-    newAct->setStatusTip(tr("Create a new file"));
-    connect(newAct, &QAction::triggered, this, &profiled_designer::newFile);
-
     openAct = new QAction(tr("&Open..."), this);
     openAct->setShortcuts(QKeySequence::Open);
     openAct->setStatusTip(tr("Open an existing file"));
@@ -233,7 +230,6 @@ void profiled_designer::createActions()
 void profiled_designer::createMenus()
 {
     fileMenu = menuBar()->addMenu(tr("&File"));
-    fileMenu->addAction(newAct);
     fileMenu->addAction(openAct);
     fileMenu->addAction(saveAct);
 }

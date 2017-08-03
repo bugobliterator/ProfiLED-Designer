@@ -241,3 +241,90 @@ void design_scene::loop_player()
         cnt = 0;    //restart loop
     }
 }
+
+void design_scene::reset_design_scene()
+{
+    if(strip.isEmpty()) {
+        return;
+    }
+    QGraphicsEllipseItem* temp_led;
+    for(int i = 0; i < strip.length(); i++)
+    {
+        temp_led = strip[i].led;
+        delete temp_led;
+    }
+    strip.clear();
+    num_leds = 0;
+}
+
+void design_scene::load_ledproj(QString fileName)
+{
+    QFile file(fileName, this);
+    if(!file.open(QIODevice::ReadOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
+    }
+    reset_design_scene();
+    QByteArray data = file.readAll();
+    QJsonArray leds;
+    QJsonDocument load_doc(QJsonDocument::fromJson(data));
+    leds = load_doc.array();
+    QJsonObject led;
+    for(int i = 0; i < leds.size(); i++) {
+        QJsonObject pos;
+        QJsonArray pattern_list;
+        led = leds[i].toObject();
+        pos = led["pos"].toObject();
+        pattern_list = led["patterns"].toArray();
+        qreal pos_x = pos["locX"].toDouble();
+        qreal pos_y = pos["locY"].toDouble();
+        QPointF pt = get_snap_coords(QPointF(pos_x, pos_y));
+        add_led(this->addEllipse(pt.x(), pt.y(), coord_step*2.0, coord_step*2.0,
+                QPen(), QBrush(Qt::white,Qt::SolidPattern)), pt);
+        for(int j = 0; j < pattern_list.size(); j++) {
+            QJsonObject pattern_item;
+            pattern_item = pattern_list[j].toObject();
+            qint8 total_time = pattern_item["totalTime"].toInt();
+            qint8 mid = pattern_item["mid"].toInt();
+            qint8 offset = pattern_item["offset"].toInt();
+            QColor start_color = QColor(pattern_item["startColor"].toString());
+            QColor end_color = QColor(pattern_item["endColor"].toString());
+            bool is_solid = pattern_item["isSolid"].toBool();
+            push_led_pattern(i, pattern(total_time, mid, offset, start_color, end_color, is_solid));
+        }
+    }
+}
+
+void design_scene::save_ledproj(QString fileName)
+{
+    QFile file(fileName, this);
+    if(!file.open(QIODevice::WriteOnly)) {
+        qWarning("Couldn't open save file.");
+        return;
+    }
+    QJsonObject led;
+    QJsonArray leds;
+    for(qint8 i = 0; i < strip.length(); i++) {
+        QJsonObject pos;
+        QJsonArray pattern_list;
+        pos["locX"] = strip[i].loc.x();
+        pos["locY"] = strip[i].loc.y();
+        for(int j = 0; j < strip[i].pattern_list.length(); j++) {
+            QJsonObject pattern_item;
+            pattern_item["totalTime"] = strip[i].pattern_list[j].total_time;
+            pattern_item["offset"] = strip[i].pattern_list[j].offset;
+            pattern_item["mid"] = strip[i].pattern_list[j].mid;
+            pattern_item["startColor"] = strip[i].pattern_list[j].start_color.name();
+            pattern_item["endColor"] = strip[i].pattern_list[j].end_color.name();
+            pattern_item["isSolid"] = strip[i].pattern_list[j].is_solid;
+            pattern_list.append(pattern_item);
+        }
+        led["id"] = i;
+        led["pos"] = pos;
+        led["patterns"] = pattern_list;
+        leds.append(led);
+    }
+    QJsonDocument save_data(leds);
+    file.write(save_data.toJson());
+    file.close();
+}

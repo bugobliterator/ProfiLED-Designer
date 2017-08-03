@@ -11,16 +11,21 @@
 #include <QList>
 #include <QColor>
 #include <QFile>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QJsonArray>
+
 class design_scene;
 class pattern
 {
 public:
-    pattern(qint8 _total_time, qint8 _mid, qint8 _offset, QColor _start_color, QColor _end_color):
+    pattern(qint8 _total_time, qint8 _mid, qint8 _offset, QColor _start_color, QColor _end_color, bool _is_solid):
         total_time(_total_time),
         mid(_mid),
         offset(_offset),
         start_color(_start_color),
-        end_color(_end_color) {}
+        end_color(_end_color),
+        is_solid(_is_solid){}
     pattern() {}
     qint8 total_time;
     qint8 mid;
@@ -66,6 +71,8 @@ public:
     QGraphicsEllipseItem* get_led_byid(qint8 led_id);
     void push_led_pattern(qint8 led_id, pattern patt);
     void save_patterns_to_file(QString& file_name);
+    void save_ledproj(QString fileName);
+    void load_ledproj(QString fileName);
     void remove_led_pattern(qint8 selected_led_id, qint16 remove_idx);
     void set_loop_time(quint8 loop_time) { global_loop_time = loop_time; }
     void delete_led(qint8 selected_led_id);
@@ -88,43 +95,11 @@ private:
     QList<led_instance> strip;
     QColor get_color_at_time(qint8 led_id,qint16 time);
     QPointF get_snap_coords(QPointF pt);
+    void reset_design_scene();
     qint32 coord_step;
     bool repos_event;
     qint8 repos_led_id;
 };
-/*
-class design_scene : public QGraphicsScene
-{
-    Q_OBJECT
-public:
-    design_scene(QObject * parent = 0);
-    void set_led_color(qint8 led_id, QColor color);
-    void push_led_pattern(qint8 selected_led_id ,pattern curr_pattern);
-    const led_strip* get_led_strip() { return strip; }
-    void set_loop_time(quint8 loop_time) { strip->set_loop_time(loop_time); }
-    inline QList<pattern> get_pattern_list(qint8 led_id)
-    {
-        return strip->get_led_pattern_list(led_id);
-    }
-    void save_patterns_to_file(QString& file_name);
-    void remove_led_pattern(qint8 selected_led_id, qint16 remove_idx);
-signals:
-
-private:
-    led_strip* strip;
-    QPointF get_snap_coords(QPointF pt);
-    qint32 coord_step;
-    bool repos_event;
-    qint8 repos_led_id;
-signals:
-    void led_selected(qint8 led_id);
-public slots:
-    void mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent);
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent * mouseEvent);
-    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent * mouseEvent);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent * mouseEvent);
-};
-*/
 
 
 #endif // LED_DESIGN_SCENE_H
