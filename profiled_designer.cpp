@@ -35,7 +35,8 @@ profiled_designer::profiled_designer(QWidget *parent) :
     QObject::connect(ui->pause_button, SIGNAL(clicked(bool)), this, SLOT(pause_button_handler(bool)));
     QObject::connect(ui->create_bin, SIGNAL(clicked(bool)), this, SLOT(create_bin_handler(bool)));
     QObject::connect(ui->remove_pattern, SIGNAL(clicked(bool)), this, SLOT(remove_pattern_handler(bool)));
-    QObject::connect(timer, SIGNAL(timeout()), scene->get_led_strip(), SLOT(loop_player()));
+    QObject::connect(timer, SIGNAL(timeout()), scene, SLOT(loop_player()));
+    QObject::connect(ui->delete_led, SIGNAL(clicked(bool)), this, SLOT(delete_led_handler()));
 }
 
 void profiled_designer::play_button_handler(bool action)
@@ -58,7 +59,23 @@ void profiled_designer::create_bin_handler(bool action)
 
 void profiled_designer::remove_pattern_handler(bool action)
 {
+    if(selected_led_id == -1) {
+           return;
+    }
+    qint16 remove_idx = ui->pattern_list->currentIndex().row();
+    if(remove_idx >= 0) {
+        scene->remove_led_pattern(selected_led_id, remove_idx);
+    }
+    ui->pattern_list->removeItemWidget(ui->pattern_list->currentItem());
+    delete ui->pattern_list->currentItem();
+}
 
+void profiled_designer::delete_led_handler()
+{
+    if(selected_led_id == -1) {
+        return;
+    }
+    scene->delete_led(selected_led_id);
 }
 
 void profiled_designer::led_selected_handler(qint8 led_id)
@@ -73,7 +90,7 @@ void profiled_designer::update_params(bool update_list)
 {
     qint16 consumed_time = 0;
     qint16 global_total_time = ui->loop_duration->value();
-    QList<pattern> pattern_list = scene->get_pattern_list(selected_led_id);
+    QList<pattern> pattern_list = scene->get_led_pattern_list(selected_led_id);
     //empty pattern list
     if(update_list) {
         ui->pattern_list->clear();
@@ -182,14 +199,17 @@ void profiled_designer::contextMenuEvent(QContextMenuEvent *event)
 
 void profiled_designer::newFile()
 {
+
 }
 
 void profiled_designer::open()
 {
+
 }
 
 void profiled_designer::save()
 {
+
 }
 
 void profiled_designer::createActions()

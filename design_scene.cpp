@@ -3,43 +3,38 @@
 design_scene::design_scene(QObject * parent) :
     QGraphicsScene(parent),
     coord_step(10),
+    num_leds(0),
     repos_event(false)
 {
-    strip = new led_strip(this);
 }
 
 void design_scene::set_led_color(qint8 led_id, QColor color)
 {
-    if(strip->get_led_byid(led_id) != nullptr) {
-        strip->get_led_byid(led_id)->setBrush(QBrush(color, Qt::SolidPattern));
+    if(get_led_byid(led_id) != nullptr) {
+        get_led_byid(led_id)->setBrush(QBrush(color, Qt::SolidPattern));
     }
 }
 
 void design_scene::mousePressEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
     QPointF pt = get_snap_coords(QPointF(mouseEvent->scenePos().x(), mouseEvent->scenePos().y()));
-    qint8 led_id = strip->led_at_pos(pt);
+    qint8 led_id = led_at_pos(pt);
     if(led_id == -1) {
-        qint32 led_id = strip->add_led(this->addEllipse(pt.x(), pt.y(), coord_step*2.0, coord_step*2.0,
-                        QPen(), QBrush(Qt::white,Qt::SolidPattern)), pt);
+        add_led(this->addEllipse(pt.x(), pt.y(), coord_step*2.0, coord_step*2.0,
+                QPen(), QBrush(Qt::white,Qt::SolidPattern)), pt);
 
     } else {
         emit led_selected(led_id);
     }
 }
 
-void design_scene::save_patterns_to_file(QString& file_name)
-{
-    strip->save_to_file(file_name);
-}
-
 //Use this event to initiate LED movement
 void design_scene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
     QPointF pt = get_snap_coords(QPointF(mouseEvent->scenePos().x(), mouseEvent->scenePos().y()));
-    qint8 led_id = strip->led_at_pos(pt);
+    qint8 led_id = led_at_pos(pt);
     if(led_id >= 0) {
-        for(uint i = 0 ; i < views().length(); i++) {
+        for(int i = 0 ; i < views().length(); i++) {
             views()[i]->viewport()->setCursor(Qt::ClosedHandCursor);
         }
     }
@@ -49,7 +44,8 @@ void design_scene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent * mouseEvent)
 
 void design_scene::mouseReleaseEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
-    for(uint i = 0 ; i < views().length(); i++) {
+    (void)mouseEvent;
+    for(int i = 0 ; i < views().length(); i++) {
         views()[i]->viewport()->unsetCursor();
     }
     repos_event = false;
@@ -60,7 +56,7 @@ void design_scene::mouseMoveEvent(QGraphicsSceneMouseEvent * mouseEvent)
 {
     if(repos_event) {
         QPointF pt = get_snap_coords(QPointF(mouseEvent->scenePos().x(), mouseEvent->scenePos().y()));
-        strip->set_led_pos(repos_led_id, pt);
+        set_led_pos(repos_led_id, pt);
         update(sceneRect());
         for(uint i = 0 ; i < views().length(); i++) {
             views()[i]->viewport()->setCursor(Qt::ClosedHandCursor);
@@ -69,27 +65,16 @@ void design_scene::mouseMoveEvent(QGraphicsSceneMouseEvent * mouseEvent)
     }
 }
 
-void design_scene::push_led_pattern(qint8 selected_led_id ,pattern curr_pattern)
-{
-    strip->add_pattern(selected_led_id, curr_pattern);
-}
-
 QPointF design_scene::get_snap_coords(QPointF pt)
 {
     return QPointF(roundf((pt.x() - coord_step)/(coord_step*2))*(coord_step*2),
                    roundf((pt.y() - coord_step)/(coord_step*2))*(coord_step*2));
 }
 
-led_strip::led_strip(design_scene *s) :
-    scene(s)
-{
-    num_leds = 0;
-}
-
-qint32 led_strip::add_led(QGraphicsEllipseItem *led, QPointF loc)
+qint32 design_scene::add_led(QGraphicsEllipseItem *led, QPointF loc)
 {
     led->setFlag(QGraphicsEllipseItem::ItemIsMovable, true);
-    QGraphicsSimpleTextItem* id_name = scene->addSimpleText(QString::number(num_leds));
+    QGraphicsSimpleTextItem* id_name = this->addSimpleText(QString::number(num_leds));
     id_name->setBrush(Qt::black);
     id_name->setParentItem(led);
     id_name->setPos(loc.x() + 2.5, loc.y() + 2.5);
@@ -99,7 +84,7 @@ qint32 led_strip::add_led(QGraphicsEllipseItem *led, QPointF loc)
     return num_leds;
 }
 
-qint8 led_strip::led_at_pos(QPointF loc)
+qint8 design_scene::led_at_pos(QPointF loc)
 {
     for(int i = 0; i < strip.length(); i++) {
         if(strip[i].loc == loc) {
@@ -109,12 +94,12 @@ qint8 led_strip::led_at_pos(QPointF loc)
     return -1;
 }
 
-QGraphicsEllipseItem* led_strip::get_led_byid(qint8 led_id)
+QGraphicsEllipseItem* design_scene::get_led_byid(qint8 led_id)
 {
     return strip[led_id].led;
 }
 
-void led_strip::set_led_pos(uint8_t led_id, QPointF loc)
+void design_scene::set_led_pos(uint8_t led_id, QPointF loc)
 {
     if(strip.length() <= 0) {
         return;
@@ -130,12 +115,32 @@ void led_strip::set_led_pos(uint8_t led_id, QPointF loc)
     strip[led_id].loc = loc;
 }
 
-void led_strip::add_pattern(qint8 led_id, pattern patt)
+void design_scene::push_led_pattern(qint8 led_id, pattern patt)
 {
     strip[led_id].pattern_list.append(patt);
 }
 
-QColor led_strip::get_color_at_time(qint8 led_id, qint16 time)
+void design_scene::remove_led_pattern(qint8 selected_led_id, qint16 remove_idx)
+{
+    strip[selected_led_id].pattern_list.removeAt(remove_idx);
+}
+
+void design_scene::delete_led(qint8 selected_led_id)
+{
+    if(selected_led_id >= strip.length()) {
+        return;
+    }
+    QGraphicsEllipseItem* led;
+    led = strip[selected_led_id].led;
+    strip.removeAt(selected_led_id);
+    delete led;
+    for(int8_t i = selected_led_id; i < strip.length(); i++) {
+        strip[i].id->setText(QString::number(i));
+    }
+    num_leds--;
+}
+
+QColor design_scene::get_color_at_time(qint8 led_id, qint16 time)
 {
     quint16 completed_time = 0;
     quint8 step = 0;
@@ -158,7 +163,7 @@ QColor led_strip::get_color_at_time(qint8 led_id, qint16 time)
                 QColor e_color = strip[led_id].pattern_list[i].end_color;
                 float mid = strip[led_id].pattern_list[i].mid/100.0; //convert mid to fraction
                 //grow start color towards mid and decay again
-                if(t_frac <= mid) {
+                if(t_frac <= mid && mid != 0.0) {
                     t_frac /= mid;
                 } else {
                     t_frac = (1.0 - t_frac)/(1.0 - mid);
@@ -173,7 +178,7 @@ QColor led_strip::get_color_at_time(qint8 led_id, qint16 time)
     return ret;
 }
 
-void led_strip::save_to_file(QString& file_name)
+void design_scene::save_patterns_to_file(QString& file_name)
 {
     qint16 time_stamp = 0;
     QByteArray data;
@@ -216,7 +221,7 @@ void led_strip::save_to_file(QString& file_name)
     delete[] prev_color_list;
 }
 
-void led_strip::loop_player()
+void design_scene::loop_player()
 {
     QColor curr_color;
     QList<QGraphicsItem*> child_list;

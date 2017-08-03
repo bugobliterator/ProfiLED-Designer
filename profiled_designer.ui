@@ -439,7 +439,7 @@
          <number>100</number>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushButton">
+       <widget class="QPushButton" name="delete_led">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -452,7 +452,7 @@
          <string>Delete LED</string>
         </property>
        </widget>
-       <widget class="QPushButton" name="pushButton_2">
+       <widget class="QPushButton" name="duplicate_led">
         <property name="geometry">
          <rect>
           <x>0</x>
@@ -486,8 +486,8 @@
        <zorder>pattern_mid</zorder>
        <zorder>remove_pattern</zorder>
        <zorder>add_pattern</zorder>
-       <zorder>pushButton</zorder>
-       <zorder>pushButton_2</zorder>
+       <zorder>delete_led</zorder>
+       <zorder>duplicate_led</zorder>
       </widget>
      </widget>
     </item>

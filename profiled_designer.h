@@ -56,6 +56,7 @@ private slots:
     void pause_button_handler(bool action);
     void create_bin_handler(bool action);
     void remove_pattern_handler(bool action);
+    void delete_led_handler();
     void newFile();
     void open();
     void save();
